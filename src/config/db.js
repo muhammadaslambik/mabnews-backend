@@ -23,11 +23,11 @@ const pool = new Pool({
   ssl: {
     rejectUnauthorized: false
   },
-  connectionTimeoutMillis: 8000,  // gagal cepat kalau koneksi baru tidak nyambung dalam 8 detik
-  idleTimeoutMillis: 10000,       // tutup koneksi menganggur setelah 10 detik
-  query_timeout: 8000,            // gagal cepat kalau query tidak selesai dalam 8 detik
-  max: 5,                         // batasi jumlah koneksi bersamaan (cocok untuk serverless)
-  allowExitOnIdle: true           // KUNCI: jangan sampai koneksi menganggur menahan proses selesai
+  connectionTimeoutMillis: 8000,
+  idleTimeoutMillis: 10000,
+  query_timeout: 8000,
+  max: 5,
+  allowExitOnIdle: true
 });
 
 pool.on("error", (err) => {
