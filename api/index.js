@@ -1,11 +1,16 @@
-const serverless = require("serverless-http");
-const app = require("../server");
+console.log("=== api/index.js MULAI DIEKSEKUSI ===");
 
-/*
- * Vercel menjalankan backend ini sebagai "serverless function" —
- * bukan server yang menyala terus-menerus, tapi function yang
- * hidup sesaat setiap kali ada request masuk, lalu "istirahat"
- * lagi setelahnya. Ini yang membuatnya tidak pernah butuh proses
- * restore/resume manual seperti database yang di-pause.
- */
-module.exports = serverless(app);
+const serverless = require("serverless-http");
+console.log("=== serverless-http berhasil di-require ===");
+
+const app = require("../server");
+console.log("=== ../server (Express app) berhasil di-require ===");
+
+const handler = serverless(app);
+console.log("=== handler serverless berhasil dibuat ===");
+
+module.exports = async (req, res) => {
+  console.log("=== handler DIPANGGIL untuk:", req.method, req.url, "===");
+  await handler(req, res);
+  console.log("=== handler SELESAI untuk:", req.method, req.url, "===");
+};
