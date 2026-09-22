@@ -109,14 +109,27 @@ async function getArticles(req, res) {
       ${whereClause}
     `;
 
-    const [listResult, countResult] = await Promise.all([
+    // Statistik untuk kartu ringkasan di halaman "Semua Artikel"
+    // (dihitung dari SEMUA artikel, tanpa filter pencarian/kategori/status,
+    // supaya angkanya konsisten dengan "Total Articles")
+    const statsQuery = `
+      select
+        count(*)::int as total_count,
+        count(*) filter (where is_popular = true)::int as popular_count,
+        count(*) filter (where show_on_homepage = true)::int as homepage_count
+      from articles
+    `;
+
+    const [listResult, countResult, statsResult] = await Promise.all([
       pool.query(listQuery, values),
-      pool.query(countQuery, values.slice(0, values.length - 2))
+      pool.query(countQuery, values.slice(0, values.length - 2)),
+      pool.query(statsQuery)
     ]);
 
     res.json({
       data: listResult.rows,
-      total: countResult.rows[0].total
+      total: countResult.rows[0].total,
+      stats: statsResult.rows[0]
     });
   } catch (err) {
     console.error(err);
