@@ -167,7 +167,9 @@ async function createArticle(req, res) {
       keywords,
       seo_meta_description,
       status = "published",
-      scheduled_at = null
+      scheduled_at = null,
+      allow_comments = true,
+      show_on_homepage = true
     } = req.body;
 
     if (!title) {
@@ -188,9 +190,10 @@ async function createArticle(req, res) {
     const insertResult = await pool.query(
       `insert into articles
         (slug, title, lead, content, image_url, caption, author, category_id,
-         is_popular, tags, keywords, seo_meta_description, status, scheduled_at)
+         is_popular, tags, keywords, seo_meta_description, status, scheduled_at,
+         allow_comments, show_on_homepage)
        values
-        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
        returning id`,
       [
         slug,
@@ -206,7 +209,9 @@ async function createArticle(req, res) {
         keywords || null,
         seo_meta_description || null,
         status,
-        scheduled_at
+        scheduled_at,
+        allow_comments,
+        show_on_homepage
       ]
     );
 
