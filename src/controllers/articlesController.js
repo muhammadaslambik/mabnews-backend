@@ -27,10 +27,58 @@ const BASE_SELECT = `
       'id', c.id,
       'key', c.key,
       'name', c.name
-    ) as category
+    ) as category,
+    coalesce(
+      (
+        select json_agg(
+          json_build_object('id', c2.id, 'key', c2.key, 'name', c2.name)
+          order by c2.name
+        )
+        from article_categories ac
+        join categories c2 on c2.id = ac.category_id
+        where ac.article_id = a.id
+      ),
+      '[]'
+    ) as categories
   from articles a
   left join categories c on c.id = a.category_id
 `;
+
+/*
+ * Ambil daftar id kategori yang valid dari array key.
+ * Dipakai oleh createArticle & updateArticle.
+ */
+async function resolveCategoryIds(keys) {
+  const uniqueKeys = [...new Set((keys || []).filter(Boolean))];
+  if (uniqueKeys.length === 0) return [];
+  const result = await pool.query(
+    "select id, key from categories where key = any($1::text[])",
+    [uniqueKeys]
+  );
+  // Urutkan sesuai urutan key yang dikirim, supaya kategori pertama
+  // yang dipilih user tetap jadi "kategori utama" (category_id).
+  return uniqueKeys
+    .map((key) => result.rows.find((r) => r.key === key)?.id)
+    .filter(Boolean);
+}
+
+/*
+ * Timpa daftar kategori sebuah artikel di tabel relasi.
+ */
+async function setArticleCategories(articleId, categoryIds) {
+  await pool.query("delete from article_categories where article_id = $1", [
+    articleId
+  ]);
+  if (categoryIds.length === 0) return;
+  const values = categoryIds
+    .map((_, i) => `($1, $${i + 2})`)
+    .join(", ");
+  await pool.query(
+    `insert into article_categories (article_id, category_id) values ${values}
+     on conflict do nothing`,
+    [articleId, ...categoryIds]
+  );
+}
 
 /* =========================================================
    GET /api/articles
@@ -62,7 +110,13 @@ async function getArticles(req, res) {
 
     if (kategori && kategori !== "all") {
       values.push(kategori);
-      conditions.push(`c.key = $${values.length}`);
+      conditions.push(`
+        exists (
+          select 1 from article_categories ac
+          join categories cf on cf.id = ac.category_id
+          where ac.article_id = a.id and cf.key = $${values.length}
+        )
+      `);
     }
 
     if (popular === "true") {
@@ -162,8 +216,9 @@ async function getArticleBySlug(req, res) {
 /* =========================================================
    POST /api/articles
    Body: { title, lead, content: [...], image_url, caption,
-           author, category_key, is_popular, tags: [...],
+           author, category_keys: [...], is_popular, tags: [...],
            keywords, seo_meta_description, status, scheduled_at }
+   (category_key tunggal masih didukung untuk kompatibilitas lama)
    ========================================================= */
 async function createArticle(req, res) {
   try {
@@ -175,6 +230,7 @@ async function createArticle(req, res) {
       caption,
       author = "MAB-News",
       category_key,
+      category_keys,
       is_popular = false,
       tags = [],
       keywords,
@@ -189,14 +245,13 @@ async function createArticle(req, res) {
       return res.status(400).json({ error: "Judul wajib diisi" });
     }
 
-    let category_id = null;
-    if (category_key) {
-      const catResult = await pool.query(
-        "select id from categories where key = $1",
-        [category_key]
-      );
-      category_id = catResult.rows[0]?.id || null;
-    }
+    const keysInput = Array.isArray(category_keys)
+      ? category_keys
+      : category_key
+      ? [category_key]
+      : [];
+    const categoryIds = await resolveCategoryIds(keysInput);
+    const primaryCategoryId = categoryIds[0] || null;
 
     const slug = slugify(title);
 
@@ -216,7 +271,7 @@ async function createArticle(req, res) {
         image_url,
         caption,
         author,
-        category_id,
+        primaryCategoryId,
         is_popular,
         Array.isArray(tags) ? tags : [],
         keywords || null,
@@ -228,9 +283,12 @@ async function createArticle(req, res) {
       ]
     );
 
+    const newArticleId = insertResult.rows[0].id;
+    await setArticleCategories(newArticleId, categoryIds);
+
     const fullResult = await pool.query(
       `${BASE_SELECT} where a.id = $1`,
-      [insertResult.rows[0].id]
+      [newArticleId]
     );
 
     res.status(201).json({ data: fullResult.rows[0] });
@@ -260,12 +318,21 @@ async function updateArticle(req, res) {
       updates.slug = slugify(updates.title);
     }
 
-    if (updates.category_key) {
-      const catResult = await pool.query(
-        "select id from categories where key = $1",
-        [updates.category_key]
+    // Kategori (bisa lebih dari satu) ditangani terpisah lewat
+    // tabel relasi article_categories, bukan kolom biasa.
+    let categoryIds = null; // null = tidak diubah
+    if (updates.category_keys !== undefined) {
+      categoryIds = await resolveCategoryIds(
+        Array.isArray(updates.category_keys) ? updates.category_keys : []
       );
-      updates.category_id = catResult.rows[0]?.id || null;
+      updates.category_id = categoryIds[0] || null;
+      delete updates.category_keys;
+    } else if (updates.category_key !== undefined) {
+      // Kompatibilitas lama: satu kategori saja
+      categoryIds = await resolveCategoryIds(
+        updates.category_key ? [updates.category_key] : []
+      );
+      updates.category_id = categoryIds[0] || null;
       delete updates.category_key;
     }
 
@@ -278,28 +345,46 @@ async function updateArticle(req, res) {
     }
 
     const fields = Object.keys(updates);
-    if (fields.length === 0) {
+    if (fields.length === 0 && categoryIds === null) {
       return res.status(400).json({ error: "Tidak ada data untuk diperbarui" });
     }
 
-    const setClause = fields
-      .map((field, index) => `${field} = $${index + 1}`)
-      .join(", ");
-    const values = fields.map((field) => updates[field]);
-    values.push(slug);
+    let articleId;
 
-    const updateResult = await pool.query(
-      `update articles set ${setClause} where slug = $${values.length} returning id`,
-      values
-    );
+    if (fields.length > 0) {
+      const setClause = fields
+        .map((field, index) => `${field} = $${index + 1}`)
+        .join(", ");
+      const values = fields.map((field) => updates[field]);
+      values.push(slug);
 
-    if (updateResult.rows.length === 0) {
-      return res.status(404).json({ error: "Artikel tidak ditemukan" });
+      const updateResult = await pool.query(
+        `update articles set ${setClause} where slug = $${values.length} returning id`,
+        values
+      );
+
+      if (updateResult.rows.length === 0) {
+        return res.status(404).json({ error: "Artikel tidak ditemukan" });
+      }
+      articleId = updateResult.rows[0].id;
+    } else {
+      const existing = await pool.query(
+        "select id from articles where slug = $1",
+        [slug]
+      );
+      if (existing.rows.length === 0) {
+        return res.status(404).json({ error: "Artikel tidak ditemukan" });
+      }
+      articleId = existing.rows[0].id;
+    }
+
+    if (categoryIds !== null) {
+      await setArticleCategories(articleId, categoryIds);
     }
 
     const fullResult = await pool.query(
       `${BASE_SELECT} where a.id = $1`,
-      [updateResult.rows[0].id]
+      [articleId]
     );
 
     res.json({ data: fullResult.rows[0] });

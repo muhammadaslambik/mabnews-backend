@@ -10,9 +10,9 @@ async function getCategories(req, res) {
     const result = await pool.query(`
       select
         c.*,
-        count(a.id)::int as article_count
+        count(distinct ac.article_id)::int as article_count
       from categories c
-      left join articles a on a.category_id = c.id
+      left join article_categories ac on ac.category_id = c.id
       group by c.id
       order by c.name asc
     `);
