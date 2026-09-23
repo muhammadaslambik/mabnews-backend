@@ -2,38 +2,47 @@ const pool = require("../config/db");
 
 /* =========================================================
    DATA DEFAULT — dipakai oleh endpoint reset.
-   Harus sinkron dengan sql/schema.sql + sql/migration_pengaturan_submenu.sql
-   dan dengan DEFAULT_MENUS di admin-js/atur-sidebar.js (frontend).
+   Harus sinkron dengan sql/migration_*.sql dan dengan
+   DEFAULT_MENUS di admin-js/atur-sidebar.js (frontend).
 
    parent_group:
      null          -> tampil di level utama sidebar (main)
-     'lainnya'     -> anak dari grup "Lainnya"
+     'artikel'     -> anak dari grup "Artikel"
      'pengaturan'  -> anak dari grup "Pengaturan"
+     'lainnya'     -> anak dari grup "Lainnya"
+
+   sort_order dibuat berurutan (1..24) mengikuti posisi tampil
+   sungguhan di sidebar, dari atas ke bawah, termasuk anak menu
+   yang langsung mengikuti nomor induknya.
 ========================================================= */
 const DEFAULT_MENUS = [
     { menu_key: "dashboard", label: "Dashboard", icon: "fa-house", type: "main", parent_group: null, sort_order: 1, is_active: true },
     { menu_key: "artikel", label: "Artikel", icon: "fa-file-lines", type: "main", parent_group: null, sort_order: 2, is_active: true },
-    { menu_key: "kategori", label: "Kategori", icon: "fa-folder", type: "main", parent_group: null, sort_order: 3, is_active: true },
-    { menu_key: "media", label: "Media", icon: "fa-image", type: "main", parent_group: null, sort_order: 4, is_active: true },
-    { menu_key: "pengguna", label: "Pengguna", icon: "fa-users", type: "main", parent_group: null, sort_order: 5, is_active: true },
-    { menu_key: "pengaturan", label: "Pengaturan", icon: "fa-gear", type: "main", parent_group: null, sort_order: 6, is_active: true },
+    { menu_key: "semua-artikel", label: "Semua Artikel", icon: "fa-list", type: "child", parent_group: "artikel", sort_order: 3, is_active: true },
+    { menu_key: "tambah-artikel", label: "Tambah Artikel", icon: "fa-plus", type: "child", parent_group: "artikel", sort_order: 4, is_active: true },
+    { menu_key: "draft", label: "Draft", icon: "fa-file-pen", type: "child", parent_group: "artikel", sort_order: 5, is_active: true },
 
-    { menu_key: "laman", label: "Laman", icon: "fa-file-lines", type: "child", parent_group: "lainnya", sort_order: 7, is_active: true },
-    { menu_key: "statistik", label: "Statistik", icon: "fa-chart-column", type: "child", parent_group: "lainnya", sort_order: 8, is_active: true },
-    { menu_key: "iklan", label: "Iklan", icon: "fa-bullhorn", type: "child", parent_group: "lainnya", sort_order: 9, is_active: true },
-    { menu_key: "perangkat", label: "Perangkat", icon: "fa-display", type: "child", parent_group: "lainnya", sort_order: 10, is_active: true },
-    { menu_key: "domain-hosting", label: "Domain & Hosting", icon: "fa-globe", type: "child", parent_group: "lainnya", sort_order: 11, is_active: true },
-    { menu_key: "backend-api", label: "BackEnd & API", icon: "fa-code", type: "child", parent_group: "lainnya", sort_order: 12, is_active: true },
-    { menu_key: "atur-sidebar", label: "Atur Sidebar", icon: "fa-table-cells", type: "child", parent_group: "lainnya", sort_order: 13, is_active: true },
-    { menu_key: "export-impor", label: "Export & Impor", icon: "fa-file-export", type: "child", parent_group: "lainnya", sort_order: 14, is_active: true },
+    { menu_key: "kategori", label: "Kategori", icon: "fa-folder", type: "main", parent_group: null, sort_order: 6, is_active: true },
+    { menu_key: "media", label: "Media", icon: "fa-image", type: "main", parent_group: null, sort_order: 7, is_active: true },
+    { menu_key: "pengguna", label: "Pengguna", icon: "fa-users", type: "main", parent_group: null, sort_order: 8, is_active: true },
+    { menu_key: "pengaturan", label: "Pengaturan", icon: "fa-gear", type: "main", parent_group: null, sort_order: 9, is_active: true },
 
-    { menu_key: "umum", label: "Umum", icon: "fa-sliders", type: "child", parent_group: "pengaturan", sort_order: 15, is_active: true },
-    { menu_key: "website", label: "Website", icon: "fa-globe", type: "child", parent_group: "pengaturan", sort_order: 16, is_active: true },
-    { menu_key: "tampilan", label: "Tampilan", icon: "fa-palette", type: "child", parent_group: "pengaturan", sort_order: 17, is_active: true },
-    { menu_key: "seo", label: "SEO", icon: "fa-magnifying-glass", type: "child", parent_group: "pengaturan", sort_order: 18, is_active: true },
-    { menu_key: "email", label: "Email", icon: "fa-envelope", type: "child", parent_group: "pengaturan", sort_order: 19, is_active: true },
-    { menu_key: "backup", label: "Backup", icon: "fa-database", type: "child", parent_group: "pengaturan", sort_order: 20, is_active: true },
-    { menu_key: "keamanan", label: "Keamanan", icon: "fa-shield-halved", type: "child", parent_group: "pengaturan", sort_order: 21, is_active: true }
+    { menu_key: "umum", label: "Umum", icon: "fa-sliders", type: "child", parent_group: "pengaturan", sort_order: 10, is_active: true },
+    { menu_key: "website", label: "Website", icon: "fa-globe", type: "child", parent_group: "pengaturan", sort_order: 11, is_active: true },
+    { menu_key: "tampilan", label: "Tampilan", icon: "fa-palette", type: "child", parent_group: "pengaturan", sort_order: 12, is_active: true },
+    { menu_key: "seo", label: "SEO", icon: "fa-magnifying-glass", type: "child", parent_group: "pengaturan", sort_order: 13, is_active: true },
+    { menu_key: "email", label: "Email", icon: "fa-envelope", type: "child", parent_group: "pengaturan", sort_order: 14, is_active: true },
+    { menu_key: "backup", label: "Backup", icon: "fa-database", type: "child", parent_group: "pengaturan", sort_order: 15, is_active: true },
+    { menu_key: "keamanan", label: "Keamanan", icon: "fa-shield-halved", type: "child", parent_group: "pengaturan", sort_order: 16, is_active: true },
+
+    { menu_key: "laman", label: "Laman", icon: "fa-file-lines", type: "child", parent_group: "lainnya", sort_order: 17, is_active: true },
+    { menu_key: "statistik", label: "Statistik", icon: "fa-chart-column", type: "child", parent_group: "lainnya", sort_order: 18, is_active: true },
+    { menu_key: "iklan", label: "Iklan", icon: "fa-bullhorn", type: "child", parent_group: "lainnya", sort_order: 19, is_active: true },
+    { menu_key: "perangkat", label: "Perangkat", icon: "fa-display", type: "child", parent_group: "lainnya", sort_order: 20, is_active: true },
+    { menu_key: "domain-hosting", label: "Domain & Hosting", icon: "fa-globe", type: "child", parent_group: "lainnya", sort_order: 21, is_active: true },
+    { menu_key: "backend-api", label: "BackEnd & API", icon: "fa-code", type: "child", parent_group: "lainnya", sort_order: 22, is_active: true },
+    { menu_key: "atur-sidebar", label: "Atur Sidebar", icon: "fa-table-cells", type: "child", parent_group: "lainnya", sort_order: 23, is_active: true },
+    { menu_key: "export-impor", label: "Export & Impor", icon: "fa-file-export", type: "child", parent_group: "lainnya", sort_order: 24, is_active: true }
 ];
 
 /*
