@@ -139,6 +139,22 @@ where category_id is not null
 on conflict do nothing;
 
 -- =========================================================
+-- TABEL: comments
+-- =========================================================
+create table if not exists comments (
+  id serial primary key,
+  article_id integer not null references articles(id) on delete cascade,
+  name text not null,
+  content text not null,
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_comments_article
+  on comments(article_id);
+create index if not exists idx_comments_created
+  on comments(created_at desc);
+
+-- =========================================================
 -- TABEL: admin_users (untuk login CMS nanti)
 -- =========================================================
 create table if not exists admin_users (
