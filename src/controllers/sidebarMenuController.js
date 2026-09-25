@@ -42,7 +42,7 @@ const DEFAULT_MENUS = [
     { menu_key: "domain-hosting", label: "Domain & Hosting", icon: "fa-globe", type: "child", parent_group: "lainnya", sort_order: 21, is_active: true },
     { menu_key: "backend-api", label: "BackEnd & API", icon: "fa-code", type: "child", parent_group: "lainnya", sort_order: 22, is_active: true },
     { menu_key: "atur-sidebar", label: "Atur Sidebar", icon: "fa-table-cells", type: "child", parent_group: "lainnya", sort_order: 23, is_active: true },
-    { menu_key: "export-impor", label: "Export & Impor", icon: "fa-file-export", type: "child", parent_group: "lainnya", sort_order: 24, is_active: true }
+    { menu_key: "export-impor", label: "Export & Import", icon: "fa-file-export", type: "child", parent_group: "lainnya", sort_order: 24, is_active: true }
 ];
 
 /*
