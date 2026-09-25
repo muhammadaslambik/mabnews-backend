@@ -156,7 +156,8 @@ alter table admin_users
   add column if not exists email text,
   add column if not exists role text default 'Penulis',
   add column if not exists status text default 'Aktif',
-  add column if not exists last_active_at timestamptz default now();
+  add column if not exists last_active_at timestamptz default now(),
+  add column if not exists avatar_url text;
 
 do $$
 begin

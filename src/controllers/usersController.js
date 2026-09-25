@@ -5,7 +5,7 @@ const ALLOWED_ROLES = ["Administrator", "Editor", "Penulis", "Kontributor"];
 const ALLOWED_STATUS = ["Aktif", "Tidak Aktif"];
 
 // Kolom yang aman dikirim ke frontend — password_hash TIDAK PERNAH ikut.
-const SAFE_COLUMNS = "id, username, name, email, role, status, last_active_at, created_at";
+const SAFE_COLUMNS = "id, username, name, email, role, status, avatar_url, last_active_at, created_at";
 
 /* =========================================================
    GET /api/users
@@ -111,7 +111,7 @@ async function updateUser(req, res) {
   try {
     const { id } = req.params;
     const body = req.body || {};
-    const allowedFields = ["username", "name", "email", "role", "status"];
+    const allowedFields = ["username", "name", "email", "role", "status", "avatar_url"];
     const updates = {};
 
     allowedFields.forEach((field) => {
