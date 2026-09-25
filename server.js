@@ -6,6 +6,7 @@ const articlesRoutes = require("./src/routes/articles");
 const categoriesRoutes = require("./src/routes/categories");
 const uploadRoutes = require("./src/routes/upload");
 const sidebarMenuRoutes = require("./src/routes/sidebarMenu");
+const usersRoutes = require("./src/routes/users");
 
 const app = express();
 
@@ -33,7 +34,11 @@ app.get("/", (req, res) => {
             "GET /api/upload/auth",
             "GET /api/sidebar-menu",
             "PUT /api/sidebar-menu",
-            "POST /api/sidebar-menu/reset"
+            "POST /api/sidebar-menu/reset",
+            "GET /api/users",
+            "POST /api/users",
+            "PUT /api/users/:id",
+            "DELETE /api/users/:id"
         ]
     });
 });
@@ -42,6 +47,7 @@ app.use("/api/articles", articlesRoutes);
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/sidebar-menu", sidebarMenuRoutes);
+app.use("/api/users", usersRoutes);
 
 /* =========================================================
    404 & ERROR HANDLER

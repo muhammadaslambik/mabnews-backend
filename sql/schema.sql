@@ -139,22 +139,6 @@ where category_id is not null
 on conflict do nothing;
 
 -- =========================================================
--- TABEL: comments
--- =========================================================
-create table if not exists comments (
-  id serial primary key,
-  article_id integer not null references articles(id) on delete cascade,
-  name text not null,
-  content text not null,
-  created_at timestamptz default now()
-);
-
-create index if not exists idx_comments_article
-  on comments(article_id);
-create index if not exists idx_comments_created
-  on comments(created_at desc);
-
--- =========================================================
 -- TABEL: admin_users (untuk login CMS nanti)
 -- =========================================================
 create table if not exists admin_users (
@@ -163,6 +147,50 @@ create table if not exists admin_users (
   password_hash text not null,
   created_at timestamptz default now()
 );
+
+-- Kolom tambahan untuk halaman "Pengguna" di CMS (nama, email,
+-- peran, status, dan waktu terakhir aktif). Aman dijalankan
+-- ulang di database yang sudah ada isinya (pakai IF NOT EXISTS).
+alter table admin_users
+  add column if not exists name text,
+  add column if not exists email text,
+  add column if not exists role text default 'Penulis',
+  add column if not exists status text default 'Aktif',
+  add column if not exists last_active_at timestamptz default now();
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'admin_users_email_key'
+  ) then
+    alter table admin_users add constraint admin_users_email_key unique (email);
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'admin_users_role_check'
+  ) then
+    alter table admin_users
+      add constraint admin_users_role_check
+      check (role in ('Administrator', 'Editor', 'Penulis', 'Kontributor'));
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'admin_users_status_check'
+  ) then
+    alter table admin_users
+      add constraint admin_users_status_check
+      check (status in ('Aktif', 'Tidak Aktif'));
+  end if;
+end $$;
+
+create index if not exists idx_admin_users_role on admin_users(role);
+create index if not exists idx_admin_users_status on admin_users(status);
 
 -- =========================================================
 -- TRIGGER: otomatis update kolom updated_at
