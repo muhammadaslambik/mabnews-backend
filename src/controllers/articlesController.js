@@ -23,6 +23,7 @@ function slugify(title) {
 const BASE_SELECT = `
   select
     a.*,
+    au.photo_url as author_photo_url,
     json_build_object(
       'id', c.id,
       'key', c.key,
@@ -42,6 +43,7 @@ const BASE_SELECT = `
     ) as categories
   from articles a
   left join categories c on c.id = a.category_id
+  left join authors au on au.name = a.author
 `;
 
 /*
