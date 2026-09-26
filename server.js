@@ -6,9 +6,8 @@ const articlesRoutes = require("./src/routes/articles");
 const categoriesRoutes = require("./src/routes/categories");
 const uploadRoutes = require("./src/routes/upload");
 const sidebarMenuRoutes = require("./src/routes/sidebarMenu");
-const notificationsRoutes = require("./src/routes/notifications");
 const usersRoutes = require("./src/routes/users");
-const messagesRoutes = require("./src/routes/messages");
+const themeRoutes = require("./src/routes/theme");
 
 const app = express();
 
@@ -37,15 +36,12 @@ app.get("/", (req, res) => {
             "GET /api/sidebar-menu",
             "PUT /api/sidebar-menu",
             "POST /api/sidebar-menu/reset",
-            "GET /api/notifications",
-            "POST /api/notifications",
-            "PUT /api/notifications/:id/read",
-            "POST /api/notifications/read-all",
             "GET /api/users",
-            "GET /api/messages/conversations",
-            "GET /api/messages/thread",
-            "GET /api/messages/unread-count",
-            "POST /api/messages"
+            "POST /api/users",
+            "PUT /api/users/:id",
+            "DELETE /api/users/:id",
+            "GET /api/theme",
+            "PUT /api/theme"
         ]
     });
 });
@@ -54,9 +50,8 @@ app.use("/api/articles", articlesRoutes);
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/sidebar-menu", sidebarMenuRoutes);
-app.use("/api/notifications", notificationsRoutes);
 app.use("/api/users", usersRoutes);
-app.use("/api/messages", messagesRoutes);
+app.use("/api/theme", themeRoutes);
 
 /* =========================================================
    404 & ERROR HANDLER

@@ -194,6 +194,21 @@ create index if not exists idx_admin_users_role on admin_users(role);
 create index if not exists idx_admin_users_status on admin_users(status);
 
 -- =========================================================
+-- TABEL: cms_theme (warna sidebar & header, satu baris setelan)
+-- =========================================================
+create table if not exists cms_theme (
+  id integer primary key default 1,
+  sidebar_color text not null default '#03142f',
+  header_color text not null default '#03142e',
+  updated_at timestamptz default now(),
+  constraint cms_theme_single_row check (id = 1)
+);
+
+insert into cms_theme (id, sidebar_color, header_color)
+values (1, '#03142f', '#03142e')
+on conflict (id) do nothing;
+
+-- =========================================================
 -- TRIGGER: otomatis update kolom updated_at
 -- =========================================================
 create or replace function set_updated_at()
