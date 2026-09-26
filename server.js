@@ -1,17 +1,17 @@
 require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 
 const articlesRoutes = require("./src/routes/articles");
 const categoriesRoutes = require("./src/routes/categories");
 const uploadRoutes = require("./src/routes/upload");
-const sidebarMenuRoutes = require("./src/routes/sidebarMenu");
-const usersRoutes = require("./src/routes/users");
+const authorsRoutes = require("./src/routes/authors");
 
 const app = express();
 
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || "*"
+  origin: process.env.CORS_ORIGIN || "*"
 }));
 app.use(express.json());
 
@@ -19,46 +19,43 @@ app.use(express.json());
    ROUTES
 ========================================================= */
 app.get("/", (req, res) => {
-    res.json({
-        message: "MAB-News API aktif",
-        endpoints: [
-            "GET /api/articles",
-            "GET /api/articles/:slug",
-            "POST /api/articles",
-            "PUT /api/articles/:slug",
-            "DELETE /api/articles/:slug",
-            "GET /api/categories",
-            "POST /api/categories",
-            "PUT /api/categories/:id",
-            "DELETE /api/categories/:id",
-            "GET /api/upload/auth",
-            "GET /api/sidebar-menu",
-            "PUT /api/sidebar-menu",
-            "POST /api/sidebar-menu/reset",
-            "GET /api/users",
-            "POST /api/users",
-            "PUT /api/users/:id",
-            "DELETE /api/users/:id"
-        ]
-    });
+  res.json({
+    message: "MAB-News API aktif",
+    endpoints: [
+      "GET /api/articles",
+      "GET /api/articles/:slug",
+      "POST /api/articles",
+      "PUT /api/articles/:slug",
+      "DELETE /api/articles/:slug",
+      "GET /api/articles/:slug/comments",
+      "POST /api/articles/:slug/comments",
+      "GET /api/categories",
+      "POST /api/categories",
+      "PUT /api/categories/:id",
+      "DELETE /api/categories/:id",
+      "GET /api/authors",
+      "POST /api/authors",
+      "DELETE /api/authors/:id",
+      "GET /api/upload/auth"
+    ]
+  });
 });
 
 app.use("/api/articles", articlesRoutes);
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/upload", uploadRoutes);
-app.use("/api/sidebar-menu", sidebarMenuRoutes);
-app.use("/api/users", usersRoutes);
+app.use("/api/authors", authorsRoutes);
 
 /* =========================================================
    404 & ERROR HANDLER
 ========================================================= */
 app.use((req, res) => {
-    res.status(404).json({ error: "Endpoint tidak ditemukan" });
+  res.status(404).json({ error: "Endpoint tidak ditemukan" });
 });
 
 app.use((err, req, res, next) => {
-    console.error(err);
-    res.status(500).json({ error: "Terjadi kesalahan pada server" });
+  console.error(err);
+  res.status(500).json({ error: "Terjadi kesalahan pada server" });
 });
 
 /*
@@ -71,10 +68,10 @@ app.use((err, req, res, next) => {
  * app.listen() di bawah ini otomatis dilewati.
  */
 if (require.main === module) {
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-        console.log(`MAB-News API berjalan di http://localhost:${PORT}`);
-    });
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`MAB-News API berjalan di http://localhost:${PORT}`);
+  });
 }
 
 module.exports = app;
