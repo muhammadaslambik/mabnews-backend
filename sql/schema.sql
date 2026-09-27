@@ -157,7 +157,17 @@ alter table admin_users
   add column if not exists role text default 'Penulis',
   add column if not exists status text default 'Aktif',
   add column if not exists last_active_at timestamptz default now(),
-  add column if not exists avatar_url text;
+  add column if not exists avatar_url text,
+  add column if not exists display_name text;
+
+-- display_name dipakai oleh fitur Pesan & Notifikasi (SQL di
+-- messagesController.js membaca kolom ini langsung). Selalu
+-- disamakan dengan name/username lewat usersController.js setiap
+-- kali data pengguna dibuat/diubah — baris ini cuma mengisi nilai
+-- awal untuk akun yang sudah ada sebelum kolom ini ditambahkan.
+update admin_users
+set display_name = coalesce(display_name, name, username)
+where display_name is null;
 
 do $$
 begin
@@ -224,3 +234,45 @@ create trigger trg_articles_updated_at
 before update on articles
 for each row
 execute function set_updated_at();
+
+-- =========================================================
+-- TABEL: messages (pesan antar pengguna CMS)
+-- =========================================================
+create table if not exists messages (
+  id serial primary key,
+  sender_id integer not null references admin_users(id) on delete cascade,
+  receiver_id integer not null references admin_users(id) on delete cascade,
+  body text not null,
+  is_read boolean not null default false,
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_messages_sender on messages(sender_id);
+create index if not exists idx_messages_receiver on messages(receiver_id);
+create index if not exists idx_messages_pair on messages(sender_id, receiver_id, created_at);
+
+-- =========================================================
+-- TABEL: notifications (notifikasi sistem, ikon lonceng di header)
+-- =========================================================
+create table if not exists notifications (
+  id serial primary key,
+  type text default 'system',
+  title text not null,
+  message text,
+  link text,
+  is_read boolean not null default false,
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_notifications_is_read on notifications(is_read);
+
+-- =========================================================
+-- TABEL: authors (penulis artikel — nama & foto untuk byline)
+-- =========================================================
+create table if not exists authors (
+  id serial primary key,
+  name text not null unique,
+  photo_url text,
+  created_at timestamptz default now()
+);
+

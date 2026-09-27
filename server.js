@@ -8,6 +8,9 @@ const uploadRoutes = require("./src/routes/upload");
 const sidebarMenuRoutes = require("./src/routes/sidebarMenu");
 const usersRoutes = require("./src/routes/users");
 const themeRoutes = require("./src/routes/theme");
+const messagesRoutes = require("./src/routes/messages");
+const notificationsRoutes = require("./src/routes/notifications");
+const authorsRoutes = require("./src/routes/authors");
 
 const app = express();
 
@@ -41,7 +44,18 @@ app.get("/", (req, res) => {
             "PUT /api/users/:id",
             "DELETE /api/users/:id",
             "GET /api/theme",
-            "PUT /api/theme"
+            "PUT /api/theme",
+            "GET /api/messages/conversations",
+            "GET /api/messages/thread",
+            "GET /api/messages/unread-count",
+            "POST /api/messages",
+            "GET /api/notifications",
+            "POST /api/notifications",
+            "PUT /api/notifications/:id/read",
+            "POST /api/notifications/read-all",
+            "GET /api/authors",
+            "POST /api/authors",
+            "DELETE /api/authors/:id"
         ]
     });
 });
@@ -52,6 +66,9 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/sidebar-menu", sidebarMenuRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/theme", themeRoutes);
+app.use("/api/messages", messagesRoutes);
+app.use("/api/notifications", notificationsRoutes);
+app.use("/api/authors", authorsRoutes);
 
 /* =========================================================
    404 & ERROR HANDLER
