@@ -276,3 +276,27 @@ create table if not exists authors (
   created_at timestamptz default now()
 );
 
+-- =========================================================
+-- TABEL: media_files
+-- Catatan file yang diunggah ke ImageKit dari CMS (editor
+-- artikel, gambar utama, halaman Media). File aslinya tetap
+-- di ImageKit; tabel ini menyimpan URL + metadata supaya
+-- muncul di halaman Media dan tidak hilang walau browser
+-- berganti. Aman dijalankan ulang (IF NOT EXISTS).
+-- =========================================================
+create table if not exists media_files (
+  id serial primary key,
+  file_id text,
+  name text not null,
+  url text not null unique,
+  file_type text not null default 'file',
+  mime_type text,
+  size_bytes bigint,
+  folder text,
+  source text not null default 'upload',
+  uploaded_by integer,
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_media_files_created_at on media_files(created_at desc);
+create index if not exists idx_media_files_type on media_files(file_type);

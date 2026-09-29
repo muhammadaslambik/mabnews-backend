@@ -11,6 +11,7 @@ const themeRoutes = require("./src/routes/theme");
 const messagesRoutes = require("./src/routes/messages");
 const notificationsRoutes = require("./src/routes/notifications");
 const authorsRoutes = require("./src/routes/authors");
+const mediaRoutes = require("./src/routes/media");
 
 const app = express();
 
@@ -55,7 +56,9 @@ app.get("/", (req, res) => {
             "POST /api/notifications/read-all",
             "GET /api/authors",
             "POST /api/authors",
-            "DELETE /api/authors/:id"
+            "DELETE /api/authors/:id",
+            "GET /api/media",
+            "POST /api/media"
         ]
     });
 });
@@ -69,6 +72,7 @@ app.use("/api/theme", themeRoutes);
 app.use("/api/messages", messagesRoutes);
 app.use("/api/notifications", notificationsRoutes);
 app.use("/api/authors", authorsRoutes);
+app.use("/api/media", mediaRoutes);
 
 /* =========================================================
    404 & ERROR HANDLER
